@@ -1,0 +1,17 @@
+{
+  "name": "skills",
+  "version": "1.0.0",
+  "description": "Claude Code skills for Go large-scale development",
+  "bin": {
+    "skills": "./bin/install.js"
+  },
+  "files": [
+    "bin",
+    "skills"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ramiro-Ribeiro/skills.git"
+  },
+  "license": "MIT"
+}
