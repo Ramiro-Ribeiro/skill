@@ -2,52 +2,56 @@
 
 ## Range Loop Variable Capture
 
-### Pre-Go 1.22: shared loop variable
+### Go 1.22+: per-iteration scoping (current default)
 
-NEVER store pointers to loop variables in Go < 1.22 — capture by value. Before Go 1.22, the range loop variable was reused across iterations. Capturing it in a closure or storing its address caused all references to point to the final value:
+Since Go 1.22 each loop iteration creates a **new** loop variable, so the classic closure-capture bug no longer occurs. Do NOT add the old `v := v` shadow copy — it is now redundant noise (and `gofmt`/`govet` consider it pointless):
 
 ```go
-// ✗ Bad (pre-1.22) — all goroutines see the last value of v
+// ✓ Good (Go 1.22+) — each iteration has its own v, no shadow copy needed
 var funcs []func()
 for _, v := range []string{"a", "b", "c"} {
     funcs = append(funcs, func() { fmt.Println(v) })
 }
 for _, f := range funcs {
-    f() // prints "c", "c", "c"
+    f() // prints "a", "b", "c"
+}
+```
+
+This applies only when `go.mod` declares `go 1.22` or later — the new semantics are gated on the module's language version, not the toolchain version. If your module still targets `go 1.21` or earlier, see the historical workaround below.
+
+### Pre-Go 1.22: shared loop variable (legacy only)
+
+Before Go 1.22 the range variable was reused across iterations, so capturing it in a closure or storing its address made all references point to the final value. The fix was to shadow it:
+
+```go
+// ✗ Bad (pre-1.22) — all closures see the last value of v ("c", "c", "c")
+for _, v := range []string{"a", "b", "c"} {
+    funcs = append(funcs, func() { fmt.Println(v) })
 }
 
-// ✓ Fix (pre-1.22) — shadow the variable
+// ✓ Fix (pre-1.22 only) — re-declare v in the inner scope
 for _, v := range []string{"a", "b", "c"} {
-    v := v // re-declare v in inner scope
+    v := v
     funcs = append(funcs, func() { fmt.Println(v) })
 }
 ```
 
-### Go 1.22+: per-iteration scoping
-
-Go 1.22 changed loop variable semantics — each iteration creates a new variable. The closure bug no longer occurs. However, if your module targets `go 1.21` or earlier in `go.mod`, the old behavior applies. Check your `go.mod` version.
-
 ## Storing Pointer to Loop Variable
 
-The same pre-1.22 issue applies to storing `&v`:
+In Go 1.22+, `&item` is safe because each iteration has its own `item`. Taking `&items[i]` is still preferable — it is clearer and avoids copying the element:
 
 ```go
-// ✗ Bad (pre-1.22) — all pointers point to the same address
 type Item struct{ Name string }
 items := []Item{{Name: "a"}, {Name: "b"}}
 var ptrs []*Item
-for _, item := range items {
-    ptrs = append(ptrs, &item) // all point to same loop variable
-}
-// ptrs[0].Name == "b", ptrs[1].Name == "b"
 
-// ✓ Good — take address of the slice element directly
+// ✓ Good — take the address of the slice element directly
 for i := range items {
     ptrs = append(ptrs, &items[i])
 }
 ```
 
-In Go 1.22+, `&item` is safe because each iteration has its own `item`. But taking `&items[i]` is still clearer and avoids a copy.
+On pre-1.22 modules, `&item` was an outright bug: every pointer aliased the single shared loop variable, so all of `ptrs` ended up pointing at the last element (`"b"`). Taking `&items[i]` was the fix then and remains the clearer choice now.
 
 ## Slice Header vs Backing Array
 

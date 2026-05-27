@@ -6,7 +6,7 @@ license: MIT
 compatibility: Designed for Claude Code or similar AI coding agents, and for projects using Golang.
 metadata:
   author: samber
-  version: "1.1.1"
+  version: "1.2.0"
   openclaw:
     emoji: "🔗"
     homepage: https://github.com/samber/cc-skills-golang
@@ -36,6 +36,7 @@ allowed-tools: Read Edit Write Glob Grep Bash(go:*) Bash(golangci-lint:*) Bash(g
 9. Context value keys MUST be unexported types to prevent collisions
 10. Context values MUST only carry request-scoped metadata — NEVER function parameters
 11. **Use `context.WithoutCancel`** (Go 1.21+) when spawning background work that must outlive the parent request
+12. **Use `context.WithCancelCause`/`WithTimeoutCause` + `context.Cause`** (Go 1.20+; `WithTimeoutCause` 1.21+) to record *why* a context was cancelled, not just that it was
 
 ## Creating Contexts
 
@@ -65,7 +66,7 @@ func (s *OrderService) Create(ctx context.Context, order Order) error {
 
 ## Deep Dives
 
-- **[Cancellation, Timeouts & Deadlines](./references/cancellation.md)** — How cancellation propagates: `WithCancel` for manual cancellation, `WithTimeout` for automatic cancellation after a duration, `WithDeadline` for absolute time deadlines. Patterns for listening (`<-ctx.Done()`) in concurrent code, `AfterFunc` callbacks, and `WithoutCancel` for operations that must outlive their parent request (e.g., audit logs).
+- **[Cancellation, Timeouts & Deadlines](./references/cancellation.md)** — How cancellation propagates: `WithCancel` for manual cancellation, `WithTimeout` for automatic cancellation after a duration, `WithDeadline` for absolute time deadlines. Cancellation causes (`WithCancelCause`/`WithTimeoutCause` + `context.Cause`) for recording *why*. Patterns for listening (`<-ctx.Done()`) in concurrent code, `AfterFunc` callbacks, and `WithoutCancel` for operations that must outlive their parent request (e.g., audit logs).
 
 - **[Context Values & Cross-Service Tracing](./references/values-tracing.md)** — Safe context value patterns: unexported key types to prevent namespace collisions, when to use context values (request ID, user ID) vs function parameters. Trace context propagation: OpenTelemetry trace headers, correlation IDs for log aggregation, and marshaling/unmarshaling context across service boundaries.
 

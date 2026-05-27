@@ -66,7 +66,7 @@
       {"id": "5.2", "text": "Explains that the outer err remains nil because the inner := never assigned to it"},
       {"id": "5.3", "text": "Recommends using = (assignment) instead of := to assign to the outer err variable"},
       {"id": "5.4", "text": "Shows the fix: declare result separately (var result ResultType) and use result, err = someFunc()"},
-      {"id": "5.5", "text": "Mentions go vet -shadow or shadow analyzer as a detection tool"}
+      {"id": "5.5", "text": "Mentions the shadow analyzer (e.g. via go vet -vettool or golangci-lint) as a detection tool"}
     ]
   },
   {

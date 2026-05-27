@@ -6,7 +6,7 @@ license: MIT
 compatibility: Designed for Claude Code or similar AI coding agents, and for projects using Golang.
 metadata:
   author: samber
-  version: "1.1.2"
+  version: "1.1.3"
   openclaw:
     emoji: "🎨"
     homepage: https://github.com/samber/cc-skills-golang
@@ -233,4 +233,5 @@ Many rules are enforced automatically: `gofmt`, `gofumpt`, `goimports`, `gocriti
 - → See the `samber/cc-skills-golang@golang-structs-interfaces` skill for pointer vs value receivers, interface design
 - → See the `samber/cc-skills-golang@golang-design-patterns` skill for functional options, builders, constructors
 - → See the `samber/cc-skills-golang@golang-lint` skill for automated formatting enforcement
+- → See `samber/cc-skills-golang@golang-object-calisthenics` skill for the early-return, no-`else`, and named-boolean disciplines applied as hard rules
 - → See `samber/cc-skills-golang@golang-continuous-integration` skill for automated AI-driven code review in CI using these guidelines

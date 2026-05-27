@@ -66,6 +66,7 @@ go test -cover ./...                      # coverage summary
 go test -coverprofile=c.out ./... && go tool cover -html=c.out  # coverage report
 go test -failfast ./...                   # stop on first failure
 go test -shuffle=on ./...                # randomize test order (Go 1.17+)
+go test -fullpath ./...                   # absolute paths in failure output (Go 1.21+)
 ```
 
 ## Debugging Flaky Tests

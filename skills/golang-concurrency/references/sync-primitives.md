@@ -202,10 +202,10 @@ func processAll(ctx context.Context, items []Item) {
     var wg sync.WaitGroup
     for _, item := range items {
         wg.Add(1) // Add BEFORE go
-        go func(item Item) {
+        go func() { // Go 1.22+: loop var is per-iteration, no `item := item` copy needed
             defer wg.Done()
             process(ctx, item)
-        }(item)
+        }()
     }
     wg.Wait() // blocks until all goroutines finish
 }
@@ -231,7 +231,7 @@ func processAll(ctx context.Context, items []Item) error {
     var lastErr error
 
     for _, item := range items {
-        item := item // optional starting Go 1.22+ (per-iteration scoping)
+        // Go 1.22+: no `item := item` copy needed — the loop var is per-iteration
         wg.Go(func() {
             if err := process(ctx, item); err != nil {
                 mu.Lock()

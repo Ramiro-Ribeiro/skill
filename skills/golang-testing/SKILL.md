@@ -6,7 +6,7 @@ license: MIT
 compatibility: Designed for Claude Code or similar AI coding agents, and for projects using Golang.
 metadata:
   author: samber
-  version: "1.1.3"
+  version: "1.1.4"
   openclaw:
     emoji: "🧪"
     homepage: https://github.com/samber/cc-skills-golang
@@ -162,9 +162,9 @@ func TestWorkerPool(t *testing.T) {
 
 ## testing/synctest for Deterministic Goroutine Testing
 
-> **Experimental:** `testing/synctest` is not yet covered by Go's compatibility guarantee. Its API may change in future releases. For stable alternatives, use `clockwork` (see [Mocking](./references/mocking.md)).
+> **Availability:** `testing/synctest` was experimental in Go 1.24 (behind `GOEXPERIMENT=synctest`, entry point `synctest.Run(func())`) and became stable in Go 1.25 with the entry point `synctest.Test(t, func(t *testing.T))`. The examples below use the stable 1.25 API. For older toolchains or as a dependency-free alternative, inject a fake clock with `clockwork` (see [Mocking](./references/mocking.md)).
 
-`testing/synctest` (Go 1.24+) provides deterministic time for concurrent code testing. Time advances only when all goroutines are blocked, making ordering predictable.
+`testing/synctest` provides deterministic time for concurrent code testing. Time advances only when all goroutines in the bubble are durably blocked, making ordering predictable.
 
 When to use `synctest` instead of real time:
 
@@ -181,7 +181,7 @@ import (
 )
 
 func TestChannelTimeout(t *testing.T) {
-    synctest.Run(func(t *testing.T) {
+    synctest.Test(t, func(t *testing.T) {
         is := assert.New(t)
 
         ch := make(chan int, 1)
@@ -215,19 +215,19 @@ For tests that may hang, use a timeout helper that panics with caller location. 
 
 → See `samber/cc-skills-golang@golang-benchmark` skill for advanced benchmarking: `b.Loop()` (Go 1.24+), `benchstat`, profiling from benchmarks, and CI regression detection.
 
-Write benchmarks to measure performance and detect regressions:
+Write benchmarks to measure performance and detect regressions. On Go 1.24+, prefer `for b.Loop()` over the legacy `for i := 0; i < b.N; i++` loop: it keeps benchmarked values from being optimized away, runs setup before the loop without `b.ResetTimer()`, and executes the body exactly once per measured iteration.
 
 ```go
 func BenchmarkStringConcatenation(b *testing.B) {
     b.Run("plus-operator", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
+        for b.Loop() {
             result := "a" + "b" + "c"
             _ = result
         }
     })
 
     b.Run("strings.Builder", func(b *testing.B) {
-        for i := 0; i < b.N; i++ {
+        for b.Loop() {
             var builder strings.Builder
             builder.WriteString("a")
             builder.WriteString("b")
@@ -246,10 +246,21 @@ func BenchmarkFibonacci(b *testing.B) {
     for _, size := range sizes {
         b.Run(fmt.Sprintf("n=%d", size), func(b *testing.B) {
             b.ReportAllocs()
-            for i := 0; i < b.N; i++ {
+            for b.Loop() {
                 Fibonacci(size)
             }
         })
+    }
+}
+```
+
+On Go versions before 1.24, use the classic loop with `b.ResetTimer()` after any setup:
+
+```go
+func BenchmarkFibonacci(b *testing.B) {
+    b.ReportAllocs()
+    for i := 0; i < b.N; i++ {
+        Fibonacci(20)
     }
 }
 ```

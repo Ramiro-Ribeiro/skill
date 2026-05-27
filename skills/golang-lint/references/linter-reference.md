@@ -57,14 +57,14 @@ All linters are enabled in the [recommended .golangci.yml](./.golangci.yml), org
 - **gocyclo** — Cyclomatic complexity threshold (configured: 13). Functions exceeding this should be split
 - **nestif** — Detects deeply nested if/else chains that harm readability
 - **funlen** — Function length limits (configured: 120 lines, 80 statements)
-- **dupl** — Code duplication detection (configured: 20 token threshold)
+- **dupl** — Code duplication detection (configured: 100 token threshold)
 
 ### Performance
 
 - **perfsprint** — Suggests faster alternatives to `fmt.Sprintf` (e.g., `strconv.Itoa` instead of `fmt.Sprintf("%d", n)`)
 - **unconvert** — Detects unnecessary type conversions (e.g., `int(x)` when `x` is already `int`)
 - **ineffassign** — Detects assignments to variables that are never subsequently read
-- **goconst** — Detects repeated string/number literals that should be extracted to constants (configured: min 2 chars, min 3 occurrences)
+- **goconst** — Detects repeated string/number literals that should be extracted to constants (configured: min 3 chars, min 4 occurrences)
 
 ### Security & Resources
 

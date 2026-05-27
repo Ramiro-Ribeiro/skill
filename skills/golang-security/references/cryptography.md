@@ -23,7 +23,8 @@ Choose the right algorithm for the job — using the wrong primitive (e.g. SHA25
 | Message authentication | HMAC-SHA256, Poly1305 | HMAC-MD5, HMAC-SHA1 | MD5/SHA1 have known collision weaknesses |
 | Digital signatures | Ed25519, ECDSA P-256 | RSA-PKCS1v1.5 | PKCS1v1.5 has padding oracle vulnerabilities |
 | Key exchange | X25519, ECDH P-256 | Static RSA key transport | Forward secrecy requires ephemeral keys |
-| Random generation | `crypto/rand` | `math/rand` | `math/rand` output is predictable |
+| Random generation (security) | `crypto/rand` | `math/rand`, `math/rand/v2` | Both `math/rand` variants are deterministic PRNGs — predictable |
+| Random generation (non-security) | `math/rand/v2` (Go 1.22+) | legacy `math/rand` | v2 has better algorithms and no global-lock contention — but still not for secrets |
 | TLS | TLS 1.2+ (prefer 1.3) | TLS 1.0, 1.1, SSL | Known attacks (BEAST, POODLE) on older versions |
 
 ### Key Size Requirements
@@ -322,14 +323,16 @@ key, _ := rsa.GenerateKey(rand.Reader, 4096) // OK: 2048+ bits
 
 ## Weak Random Number Generators — High
 
-`math/rand` is predictable, never use for security.
+`math/rand` (and `math/rand/v2`) are deterministic PRNGs — their output is predictable, so NEVER use either for security-critical values (tokens, session IDs, nonces, salts, keys). Seeding a PRNG from `crypto/rand` does not help: once enough output is observed the internal state can be inferred and all future values predicted.
 
 **Bad:**
 
 ```go
-import "math/rand"
+import "math/rand/v2"
 bytes := make([]byte, 16)
-rand.Read(bytes) // DON'T: predictable
+for i := range bytes {
+    bytes[i] = byte(rand.IntN(256)) // DON'T: predictable, even with math/rand/v2
+}
 ```
 
 **Good:**
@@ -338,6 +341,8 @@ rand.Read(bytes) // DON'T: predictable
 import "crypto/rand"
 _, err := rand.Read(bytes) // OK: cryptographically secure
 ```
+
+For non-security randomness (jitter, sampling, shuffling, load balancing), prefer `math/rand/v2` (Go 1.22+) over the legacy `math/rand`: it has a cleaner API, better algorithms (PCG/ChaCha8), and no global lock contention from the deprecated top-level `Seed`. Reserve `crypto/rand` for anything an attacker must not be able to guess.
 
 ---
 
