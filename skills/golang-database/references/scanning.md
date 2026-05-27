@@ -62,7 +62,7 @@ type User struct {
 // Check: if user.DeletedAt != nil { ... }
 ```
 
-**2. `sql.NullXxx` types** or `sql.Null[T]` generic — explicit but verbose, requires custom JSON marshaling:
+**2. `sql.NullXxx` types** or the generic `sql.Null[T]` (Go 1.22+) — explicit but verbose, requires custom JSON marshaling:
 
 ```go
 type User struct {
@@ -70,6 +70,17 @@ type User struct {
     Bio       sql.NullString `db:"bio"`
 }
 // Check: if user.Bio.Valid { use(user.Bio.String) }
+```
+
+Since Go 1.22, `sql.Null[T]` replaces the per-type structs with a single generic, useful for types without a dedicated `sql.NullXxx` (e.g. `uuid.UUID`, custom enums):
+
+```go
+type User struct {
+    ID  int64             `db:"id"`
+    Bio sql.Null[string]  `db:"bio"`     // equivalent to sql.NullString
+    UID sql.Null[uuid.UUID] `db:"uid"`   // no sql.NullUUID exists — generic fills the gap
+}
+// Check: if user.Bio.Valid { use(user.Bio.V) }  // value is .V, not .String
 ```
 
 **3. `COALESCE` in SQL** — moves NULL handling to the query:

@@ -6,7 +6,7 @@ license: MIT
 compatibility: Designed for Claude Code or similar AI coding agents, and for projects using Golang.
 metadata:
   author: samber
-  version: "1.1.2"
+  version: "1.2.0"
   openclaw:
     emoji: "🗄️"
     homepage: https://github.com/samber/cc-skills-golang
@@ -43,7 +43,7 @@ When using sqlx or pgx, refer to the library's official documentation and code e
 7. **Use transactions for multi-statement operations** — wrap related writes in `BeginTxx`/`Commit`
 8. **Use `SELECT ... FOR UPDATE`** when reading data you intend to modify — prevents race conditions
 9. **Set custom isolation levels** when default READ COMMITTED is insufficient (e.g., serializable for financial operations)
-10. **Handle NULLable columns** with pointer fields (`*string`, `*int`) or `sql.NullXxx` types
+10. **Handle NULLable columns** with pointer fields (`*string`, `*int`), `sql.NullXxx` types, or the generic `sql.Null[T]` (Go 1.22+)
 11. Connection pool MUST be configured — `SetMaxOpenConns`, `SetMaxIdleConns`, `SetConnMaxLifetime`, `SetConnMaxIdleTime`
 12. **Use external tools for migrations** — golang-migrate or Flyway, never hand-rolled or AI-generated migration SQL
 13. **Batch operations in reasonable sizes** — not row-by-row (too many round trips), not millions at once (locks and memory)

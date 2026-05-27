@@ -85,6 +85,39 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 }
 ```
 
+## Grouping Attributes with `slog.Group`
+
+Use `slog.Group` to namespace related attributes instead of flattening everything onto the record. Grouped keys serialize as nested objects in JSON (`request.method`, `request.path`), which keeps log queries unambiguous when different subsystems use the same field name.
+
+```go
+slog.InfoContext(ctx, "request completed",
+    slog.Group("request",
+        "method", r.Method,
+        "path", r.URL.Path,
+    ),
+    slog.Group("response",
+        "status", status,
+        "bytes", size,
+    ),
+)
+// JSON: {"msg":"request completed","request":{"method":"GET","path":"/orders"},"response":{"status":200,"bytes":1024}}
+```
+
+## Hot-Path Logging with `LogAttrs`
+
+The variadic `slog.Info("msg", "key", val, ...)` form is convenient but allocates: every value is boxed into an `any`. On hot paths, use `LogAttrs` with strongly-typed `slog.Attr` constructors (`slog.String`, `slog.Int`, `slog.Duration`, ...) to avoid the boxing and the alternating key/value slice.
+
+```go
+// Allocation-light, type-checked — preferred in hot paths
+slog.LogAttrs(ctx, slog.LevelInfo, "order created",
+    slog.String("order_id", orderID),
+    slog.Int("items", len(items)),
+    slog.Duration("elapsed", elapsed),
+)
+```
+
+`LogAttrs` also takes `ctx` and the level explicitly, so it doubles as the context-aware form for any level.
+
 ## Log Sinks and the `slog` Ecosystem
 
 `slog` supports pluggable handlers. The Go community provides handlers for most log backends:
