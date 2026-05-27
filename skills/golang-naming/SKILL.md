@@ -6,7 +6,7 @@ license: MIT
 compatibility: Designed for Claude Code or similar AI coding agents, and for projects using Golang.
 metadata:
   author: samber
-  version: "1.1.1"
+  version: "1.1.2"
   openclaw:
     emoji: "🏷️"
     homepage: https://github.com/samber/cc-skills-golang
@@ -160,4 +160,5 @@ Many naming convention issues are caught automatically by linters: `revive`, `pr
 
 - → See `samber/cc-skills-golang@golang-code-style` skill for broader formatting and style decisions
 - → See `samber/cc-skills-golang@golang-structs-interfaces` skill for interface naming depth and receiver design
+- → See `samber/cc-skills-golang@golang-object-calisthenics` skill for wrapping primitives in well-named value objects instead of bare `string`/`int` fields
 - → See `samber/cc-skills-golang@golang-lint` skill for automated enforcement (revive, predeclared, misspell, errname)

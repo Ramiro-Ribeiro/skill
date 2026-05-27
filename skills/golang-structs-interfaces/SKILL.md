@@ -6,7 +6,7 @@ license: MIT
 compatibility: Designed for Claude Code or similar AI coding agents, and for projects using Golang.
 metadata:
   author: samber
-  version: "1.1.3"
+  version: "1.1.4"
   openclaw:
     emoji: "🧩"
     homepage: https://github.com/samber/cc-skills-golang
@@ -364,6 +364,7 @@ func process(pool ConnPool) { ... }
 - → See `samber/cc-skills-golang@golang-design-patterns` skill for functional options, constructors, and builder patterns
 - → See `samber/cc-skills-golang@golang-dependency-injection` skill for DI patterns using interfaces
 - → See `samber/cc-skills-golang@golang-code-style` skill for value vs pointer function parameters (distinct from receivers)
+- → See `samber/cc-skills-golang@golang-object-calisthenics` skill for small entities, tell-don't-ask methods, and value objects that wrap primitive fields
 
 ## Common Mistakes
 
