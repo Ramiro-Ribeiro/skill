@@ -110,3 +110,21 @@ err := errors.Join(ErrNotFound, ErrUnauthorized)
 errors.Is(err, ErrNotFound)    // true
 errors.Is(err, ErrUnauthorized) // true
 ```
+
+## Wrapping Multiple Errors in One `fmt.Errorf` (Go 1.20+)
+
+A single `fmt.Errorf` may contain more than one `%w` verb. All wrapped errors
+become inspectable with `errors.Is`/`errors.As` — handy for adding context to a
+join.
+
+```go
+// Both the operation error and a sentinel travel in the chain
+err := fmt.Errorf("loading config %w: %w", ErrConfigInvalid, parseErr)
+
+errors.Is(err, ErrConfigInvalid) // true
+errors.Is(err, parseErr)         // true
+```
+
+Use this when one message must carry context from several errors; reach for
+`errors.Join` when you're aggregating an open-ended list (e.g. validation
+results, parallel failures).

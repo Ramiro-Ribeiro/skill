@@ -90,7 +90,14 @@ func doWork() error {
 }
 ```
 
-**Detect:** `go vet -shadow` or `golang.org/x/tools/go/analysis/passes/shadow`.
+**Detect:** the `shadow` analyzer (the old `go vet -shadow` flag was removed). Install and run it standalone:
+
+```bash
+go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@latest
+go vet -vettool=$(which shadow) ./...
+```
+
+`golangci-lint` also bundles this via the `govet` linter (enable the `shadow` analyzer in config).
 
 ## Slice and Map Gotchas
 
@@ -710,14 +717,18 @@ userInput := "../../etc/passwd"
 path := filepath.Join(base, userInput)
 // path = "/etc/passwd" — escaped!
 
-// GOOD — verify the result stays within the base
+// GOOD (Go 1.20+) — reject inputs that aren't local before joining.
+// filepath.IsLocal returns false for absolute paths, "..", and (on Windows)
+// reserved names — the cleanest guard for the "must stay within base" case.
 func safePath(base, userInput string) (string, error) {
-    path := filepath.Join(base, userInput)
-    if !strings.HasPrefix(filepath.Clean(path), filepath.Clean(base)+string(os.PathSeparator)) {
+    if !filepath.IsLocal(userInput) {
         return "", fmt.Errorf("path traversal attempt: %s", userInput)
     }
-    return path, nil
+    return filepath.Join(base, userInput), nil
 }
+
+// Go 1.24+: os.Root sandboxes filesystem access so traversal cannot escape.
+// root, err := os.OpenRoot(base); f, err := root.Open(userInput)
 ```
 
 ## Pointer Receiver Interface Satisfaction

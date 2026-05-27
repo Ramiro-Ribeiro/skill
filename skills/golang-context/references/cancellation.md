@@ -129,6 +129,38 @@ func processLargeDataset(ctx context.Context, items []Item) error {
 }
 ```
 
+## Cancellation Causes (Go 1.21+)
+
+`ctx.Err()` only tells you *that* a context was cancelled (`context.Canceled` or `context.DeadlineExceeded`) — not *why*. The cause API lets you attach and retrieve a specific reason.
+
+- `context.WithCancelCause(parent)` returns a `CancelCauseFunc` — call `cancel(err)` to record why.
+- `context.WithTimeoutCause` / `context.WithDeadlineCause` attach a cause that surfaces when the timer fires.
+- `context.Cause(ctx)` returns the recorded cause (falls back to `ctx.Err()` if none was set).
+
+```go
+func fetchWithReason(ctx context.Context, urls []string) ([]byte, error) {
+    ctx, cancel := context.WithCancelCause(ctx)
+    defer cancel(nil) // nil cause = ordinary cleanup, no override
+
+    // ... later, on a domain-specific failure:
+    cancel(fmt.Errorf("upstream quota exceeded"))
+
+    <-ctx.Done()
+    // ctx.Err() == context.Canceled (generic)
+    // context.Cause(ctx) == "upstream quota exceeded" (specific)
+    return nil, context.Cause(ctx)
+}
+```
+
+`WithTimeoutCause` is especially useful for distinguishing *your* deadline from a parent's:
+
+```go
+ctx, cancel := context.WithTimeoutCause(ctx, 2*time.Second, errStageTimeout)
+defer cancel()
+// On expiry: ctx.Err() == context.DeadlineExceeded,
+//            context.Cause(ctx) == errStageTimeout
+```
+
 ## `context.AfterFunc` (Go 1.21+)
 
 Registers a callback that runs in its own goroutine when the context is cancelled. Useful for cleanup without blocking the main flow.
