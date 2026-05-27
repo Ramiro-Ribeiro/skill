@@ -102,16 +102,16 @@ func fanIn(ctx context.Context, channels ...<-chan Result) <-chan Result {
 
     for _, ch := range channels {
         wg.Add(1)
-        go func(c <-chan Result) {
+        go func() {
             defer wg.Done()
-            for v := range c {
+            for v := range ch { // Go 1.22+: loop var is per-iteration, no copy needed
                 select {
                 case out <- v:
                 case <-ctx.Done():
                     return
                 }
             }
-        }(ch)
+        }()
     }
 
     go func() {
@@ -158,11 +158,11 @@ func processAll(ctx context.Context, items []Item) error {
     for _, item := range items {
         wg.Add(1)
         sem <- struct{}{} // acquire
-        go func(item Item) {
+        go func() { // Go 1.22+: no `item := item` copy needed
             defer wg.Done()
             defer func() { <-sem }() // release
             process(ctx, item)
-        }(item)
+        }()
     }
     wg.Wait()
     return nil

@@ -6,7 +6,7 @@ license: MIT
 compatibility: Designed for Claude Code or similar AI coding agents, and for projects using Golang.
 metadata:
   author: samber
-  version: "1.1.3"
+  version: "1.1.4"
   openclaw:
     emoji: "🏗️"
     homepage: https://github.com/samber/cc-skills-golang
@@ -271,6 +271,7 @@ Core principles regardless of architecture:
 - → See `samber/cc-skills-golang@golang-data-structures` skill for data structure selection, internals, and container/ packages
 - → See `samber/cc-skills-golang@golang-error-handling` skill for error wrapping, sentinel errors, and the single handling rule
 - → See `samber/cc-skills-golang@golang-structs-interfaces` skill for interface design and composition
+- → See `samber/cc-skills-golang@golang-object-calisthenics` skill for rich domain types and value objects that complement the constructor and DDD patterns here
 - → See `samber/cc-skills-golang@golang-concurrency` skill for goroutine lifecycle and graceful shutdown
 - → See `samber/cc-skills-golang@golang-context` skill for timeout and cancellation patterns
 - → See `samber/cc-skills-golang@golang-project-layout` skill for architecture and directory structure

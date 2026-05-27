@@ -6,7 +6,7 @@ license: MIT
 compatibility: Designed for Claude Code or similar AI coding agents, and for projects using Golang.
 metadata:
   author: samber
-  version: "1.1.3"
+  version: "1.1.4"
   openclaw:
     emoji: "⚡"
     homepage: https://github.com/samber/cc-skills-golang
@@ -116,6 +116,7 @@ When auditing concurrency across a large codebase, use up to 5 parallel sub-agen
 | Unbounded goroutine spawning | Use `errgroup.SetLimit(n)` or semaphore |
 | Sharing pointer via channel | Send copies or immutable values |
 | `wg.Add` inside goroutine | Call `Add` before `go` — `Wait` may return early otherwise |
+| `x := x` loop-var copy before `go func` | Unnecessary on Go 1.22+ — the loop variable is per-iteration. Drop the copy and capture directly |
 | Forgetting `-race` in CI | Always run `go test -race ./...` |
 | Mutex held across I/O | Keep critical sections short |
 
