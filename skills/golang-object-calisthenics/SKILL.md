@@ -214,12 +214,12 @@ be short. Defer fully to `samber/cc-skills-golang@golang-naming`.
 
 ```go
 // Good — short where scope is tiny, descriptive where it lives long
-func (c *Cart) Total(ctx context.Context, userRepo UserRepository) Money {
-	for i, it := range c.items {
-		_ = i
-		_ = it
+func (c *Cart) Total(ctx context.Context, rates RateTable) Money {
+	var sum Money
+	for _, it := range c.items {
+		sum = sum.Add(rates.Convert(ctx, it.Price))
 	}
-	// ...
+	return sum
 }
 
 // Bad — cryptic, inconsistent abbreviations
