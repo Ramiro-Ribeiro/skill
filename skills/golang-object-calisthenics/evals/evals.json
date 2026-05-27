@@ -1,0 +1,174 @@
+[
+  {
+    "id": 1,
+    "name": "no-else-early-return",
+    "description": "Authorization/validation uses guard clauses with early return; no else after a terminating if",
+    "prompt": "Write a Go function Authorize in package `access` that decides whether a request may proceed and returns an error. It takes a User struct (fields: IsActive bool, IsBanned bool, Role string, TokenExpiry time.Time) and a resource name string. The rules: if the user is banned, deny with ErrBanned; if the user is not active, deny with ErrInactive; if the user's token has expired (TokenExpiry before time.Now()), deny with ErrExpired; if the role is neither 'admin' nor 'editor', deny with ErrForbidden. If all checks pass, return nil. Write the function so the success path is obvious.",
+    "trap": "Model wraps the happy path inside if/else if/else branches (if active { ... } else { return ErrInactive }), pushing the success path into nested blocks instead of using guard clauses",
+    "assertions": [
+      {
+        "id": "1.1",
+        "text": "Each denial condition is written as a guard clause with an immediate early return (if u.IsBanned { return ErrBanned }) — NOT as the else branch of a positive condition"
+      },
+      {
+        "id": "1.2",
+        "text": "The function body contains no 'else' or 'else if' keyword after a terminating if that returns"
+      },
+      {
+        "id": "1.3",
+        "text": "The success path (return nil) is at the top level of the function body (indentation level 1), not nested inside any if block"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "value-object-wrap-primitive",
+    "description": "Domain value gets its own type plus a validating constructor; an invalid value cannot be constructed",
+    "prompt": "Write a Go file `email.go` in package `account` that models a user's email address. An email must always be valid: it has to be non-empty and contain an '@'. The rest of the codebase needs to accept email addresses, store them, and never have to re-check validity once it holds one. Provide whatever the codebase needs to create and use an email address safely.",
+    "trap": "Model uses a raw `string` for the email everywhere and validates it ad hoc in each caller (or in a standalone func ValidateEmail(s string) bool), leaving it possible to construct and pass around an invalid email",
+    "assertions": [
+      {
+        "id": "2.1",
+        "text": "A defined type is introduced for the value (e.g. type Email string or type Email struct{...}) — NOT a bare string passed around"
+      },
+      {
+        "id": "2.2",
+        "text": "A constructor (e.g. NewEmail(s string) (Email, error)) returns the type and an error, and enforces the invariant (non-empty, contains '@') by returning an error for invalid input"
+      },
+      {
+        "id": "2.3",
+        "text": "The invariant is centralized in the constructor — callers do not each re-validate the raw string; there is no exported way to obtain a populated Email value that bypasses the constructor's check"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "first-class-collection",
+    "description": "A collection with behavior/invariants is wrapped in a struct that owns Total/IsEmpty/Add — not a raw slice with logic duplicated at call sites",
+    "prompt": "Write a Go file `cart.go` in package `shop` for a shopping cart. A cart holds line items (define a LineItem with a Price field of some money type), can report its total price, can tell whether it is empty, and can have items added to it. The total and the empty rule are used in several places: the checkout flow, the order summary, and the UI. Implement the cart and these operations.",
+    "trap": "Model exposes a raw []LineItem (a bare slice field or a func total(items []LineItem)) and re-implements the total/empty logic at each call site instead of giving the collection a home that owns those operations",
+    "assertions": [
+      {
+        "id": "3.1",
+        "text": "The line items are wrapped in a struct (e.g. type Cart struct { items []LineItem }) rather than passed around as a bare []LineItem"
+      },
+      {
+        "id": "3.2",
+        "text": "The struct owns the behavior as methods: Total() (returning the summed price), IsEmpty() bool, and Add(item LineItem) — the total/empty logic lives on the type, not at call sites"
+      },
+      {
+        "id": "3.3",
+        "text": "The total is computed once inside the collection's method; there is no free function that re-sums a raw []LineItem outside the type"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "law-of-demeter",
+    "description": "Object exposes a single method for distant state; no train-wreck chain through objects it does not own",
+    "prompt": "Write Go code in package `shipping` with types Order, Customer, and Address. An Order has a Customer, a Customer has an Address, and an Address has a Country (a string country code). The shipping-cost calculator needs the country code of the order's destination so it can pick a rate. Write the Order type and whatever the calculator should call to obtain the destination country code, then show the calculator using it.",
+    "trap": "Model has the calculator reach through the whole graph — order.Customer().Address().Country() (or order.Customer.Address.Country) — coupling the calculator to Customer and Address internals",
+    "assertions": [
+      {
+        "id": "4.1",
+        "text": "Order exposes a single method that returns the destination country code (e.g. func (o Order) ShippingCountryCode() string), hiding the traversal"
+      },
+      {
+        "id": "4.2",
+        "text": "The shipping-cost calculator calls that one method on Order — it does NOT chain order.Customer().Address().Country() or order.Customer.Address.Country through objects it doesn't own"
+      },
+      {
+        "id": "4.3",
+        "text": "The multi-hop traversal, if present at all, lives inside Order's own method — not at the calling site"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "tell-dont-ask-no-getset",
+    "description": "A behavior method encapsulates the withdrawal rule and guards the invariant; no setter that lets callers bypass it",
+    "prompt": "Write a Go file `account.go` in package `bank` for a bank Account that holds a balance (use a money type such as int64 cents) and an overdraft limit. Callers need to withdraw money from an account. A withdrawal must fail if it would push the balance below the negative overdraft limit; otherwise it reduces the balance. Implement the account so the withdrawal rule is always enforced.",
+    "trap": "Model emits Java-style GetBalance()/SetBalance() and expects the caller to do account.SetBalance(account.GetBalance() - amount), letting any caller mutate the balance and skip the overdraft check entirely",
+    "assertions": [
+      {
+        "id": "5.1",
+        "text": "A behavior method on Account performs the withdrawal (e.g. func (a *Account) Withdraw(amount int64) error) and enforces the overdraft rule, returning an error when the limit would be breached"
+      },
+      {
+        "id": "5.2",
+        "text": "There is no GetBalance/SetBalance pair that lets a caller read the balance, mutate it externally, and write it back — the balance is not settable in a way that bypasses Withdraw's invariant check"
+      },
+      {
+        "id": "5.3",
+        "text": "Callers express intent by telling the account what to do (account.Withdraw(amount)) rather than asking for state and mutating it from outside"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "small-interface",
+    "description": "A minimal single-purpose interface defined on the consumer side; not a fat kitchen-sink interface",
+    "prompt": "Write a Go file `signup.go` in package `signup`. A SignupService finishes registering a user and then needs to send them a welcome notification. The service should depend on an abstraction for sending notifications so that email, SMS, or a no-op fake can be plugged in for tests. Define that abstraction and show the service depending on it.",
+    "trap": "Model defines a fat Notifier/Service interface with many unrelated methods (Send, Archive, Reindex, Configure, Subscribe...) that every implementation and test fake must satisfy, instead of the one method the service actually uses",
+    "assertions": [
+      {
+        "id": "6.1",
+        "text": "The abstraction is a minimal interface with a single method for sending a notification (ideally one method, e.g. Notify(ctx context.Context, msg Message) error)"
+      },
+      {
+        "id": "6.2",
+        "text": "The interface contains only what the SignupService actually needs — no unrelated methods like Archive/Reindex/Configure bolted on"
+      },
+      {
+        "id": "6.3",
+        "text": "The interface is declared on the consumer side (in the signup package that uses it), and the service holds it as a dependency"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "high-cohesion-split",
+    "description": "Related fields grouped into cohesive sub-structs by responsibility — without imposing an artificial 2-field cap",
+    "prompt": "Write a Go file `order.go` in package `orders` that models an Order. An order carries: its own ID; the customer's name, email, and phone; a shipping address (street, city, postal code, country); and payment data (card last 4 digits, expiry month, expiry year). Model this so the structure is clean and the related pieces are easy to reuse and pass around.",
+    "trap": "Model produces one flat god-struct with a dozen sibling primitive fields (CustomerName, CustomerEmail, Street, City, CardLast4, ExpMonth...) all at the same level, mixing customer, address, and payment concerns",
+    "assertions": [
+      {
+        "id": "7.1",
+        "text": "Related fields are grouped into nested or embedded sub-structs by responsibility — e.g. an Address type (street/city/postal/country) and a Payment type (card last4/expiry), rather than all primitives flat on Order"
+      },
+      {
+        "id": "7.2",
+        "text": "Order references those sub-structs as fields (e.g. ShipTo Address, Payment Payment) instead of inlining every primitive at the top level"
+      },
+      {
+        "id": "7.3",
+        "text": "The split is by cohesion, NOT an artificial cap of 2 fields per struct — sub-structs legitimately hold 3-4 related fields and Order itself may have several fields"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "idiomatic-short-names",
+    "description": "Idiomatic short names (i, w, r, ctx, single-letter receivers) are used and accepted in tight scopes — the rule-6 'don't abbreviate' reinterpretation",
+    "prompt": "Write a Go file `serve.go` in package `web`. Include: (1) a function SumScores that takes a []int and returns their sum using a counted for loop with an index, and (2) an http.HandlerFunc named HandleHealth that writes a 200 status and the body 'ok' to the response. Add a method on a small Server struct (one field) that returns whether the server is ready. Write clean, idiomatic Go.",
+    "trap": "Model over-applies 'don't abbreviate', producing verbose names for tightly-scoped identifiers — index instead of i, responseWriter / requestWriter instead of w, httpRequest instead of r, and a spelled-out multi-character receiver for the tiny Server method",
+    "assertions": [
+      {
+        "id": "8.1",
+        "text": "The counted loop index in SumScores uses the idiomatic short name i (not index, idx, or counter) — short names proportional to a tiny scope are correct here"
+      },
+      {
+        "id": "8.2",
+        "text": "The HTTP handler's parameters use the idiomatic w http.ResponseWriter and r *http.Request (not responseWriter/requestWriter/httpRequest); context, if used, is ctx"
+      },
+      {
+        "id": "8.3",
+        "text": "The method on Server uses a short single-letter receiver (e.g. (s *Server)) rather than a spelled-out word like (server *Server)"
+      },
+      {
+        "id": "8.4",
+        "text": "The PASS condition is the short idiomatic names — long spelled-out names for these tightly-scoped identifiers would be a FAIL, not an improvement"
+      }
+    ]
+  }
+]
