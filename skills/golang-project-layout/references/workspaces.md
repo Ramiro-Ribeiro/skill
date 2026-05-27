@@ -61,40 +61,47 @@ my-monorepo/
 go work init
 ```
 
-This creates `go.work`:
+`go work init` creates an empty `go.work` with just a Go directive — it does not auto-discover modules:
 
 ```go
 go 1.21
-
-use (
-    ./services/auth
-    ./services/user
-    ./shared/libs
-    ./tools/cli
-)
 ```
 
 2. **Add modules to workspace:**
 
 ```bash
-go work use ./services/auth
-go work use ./services/user
-go work use ./shared/libs
+go work use ./pkg/auth
+go work use ./pkg/user
+go work use ./cmd/api
+go work use ./tools/cli
+```
+
+You can also initialize and add in one step: `go work init ./pkg/auth ./pkg/user`. After adding, `go.work` lists the modules:
+
+```go
+go 1.21
+
+use (
+    ./pkg/auth
+    ./pkg/user
+    ./cmd/api
+    ./tools/cli
+)
 ```
 
 3. **Use modules without replace directives:**
 
-In `services/user/go.mod`:
+In `pkg/user/go.mod`:
 
 ```go
-module github.com/user/my-monorepo/services/user
+module github.com/user/my-monorepo/pkg/user
 
 go 1.21
 
-require github.com/user/my-monorepo/shared/libs v0.0.0
+require github.com/user/my-monorepo/pkg/auth v0.0.0
 ```
 
-The workspace automatically resolves `shared/libs` to the local directory.
+The workspace automatically resolves `pkg/auth` to the local directory.
 
 ## Workspace Commands
 
