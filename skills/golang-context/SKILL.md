@@ -36,7 +36,7 @@ allowed-tools: Read Edit Write Glob Grep Bash(go:*) Bash(golangci-lint:*) Bash(g
 9. Context value keys MUST be unexported types to prevent collisions
 10. Context values MUST only carry request-scoped metadata — NEVER function parameters
 11. **Use `context.WithoutCancel`** (Go 1.21+) when spawning background work that must outlive the parent request
-12. **Use `context.WithCancelCause`/`WithTimeoutCause` + `context.Cause`** (Go 1.21+) to record *why* a context was cancelled, not just that it was
+12. **Use `context.WithCancelCause`/`WithTimeoutCause` + `context.Cause`** (Go 1.20+; `WithTimeoutCause` 1.21+) to record *why* a context was cancelled, not just that it was
 
 ## Creating Contexts
 
