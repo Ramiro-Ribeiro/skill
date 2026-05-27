@@ -60,6 +60,12 @@ Restart Claude Code after installing.
 | `golang-testing` | Table-driven, testify, mocks, fuzzing, goleak, snapshot, CI |
 | `golang-lint` | golangci-lint, `.golangci.yml`, nolint directives |
 
+### Discipline
+
+| Skill | What it covers |
+|-------|---------------|
+| `golang-object-calisthenics` | Object Calisthenics 9 rules adapted pragmatically to idiomatic Go — value objects, tell-don't-ask, small entities |
+
 ### Production
 
 | Skill | What it covers |
